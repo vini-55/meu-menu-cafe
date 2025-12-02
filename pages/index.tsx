@@ -1,68 +1,32 @@
 import { useState } from 'react';
 import Head from 'next/head';
+import { client } from '../lib/sanity'; // Conexão com o Sanity
 import MenuCard from '../components/MenuCard';
 import Navbar from '../components/Navbar';
 import CategoryFilter from '../components/CategoryFilter';
 
-// Dados Atualizados (Brownie, Co-Working e fotos corrigidas)
-const products = [
-  {
-    id: '1',
-    name: 'Cappuccino Avelã',
-    description: 'Espresso duplo, leite vaporizado e essência de avelã.',
-    price: 14.90,
-    imageUrl: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=600&q=80',
-    tags: ['Contém Lactose', 'Hot'],
-    available: true,
-    category: 'Cafés'
-  },
-  {
-    id: '2',
-    name: 'Toast de Avocado',
-    description: 'Pão de fermentação natural com avocado, azeite e temperos.',
-    price: 22.50,
-    imageUrl: 'https://images.unsplash.com/photo-1603046891726-36bfd957e0bf?auto=format&fit=crop&w=600&q=80',
-    tags: ['Vegano'],
-    available: true,
-    category: 'Salgados'
-  },
-  {
-    id: '3',
-    name: 'Croissant Simples',
-    description: 'Clássico francês amanteigado.',
-    price: 12.00,
-    imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80',
-    tags: ['Vegetariano'],
-    available: false,
-    category: 'Salgados'
-  },
-  {
-    id: '4',
-    name: 'Brownie de Chocolate',
-    description: 'Brownie denso com pedaços de chocolate belga.',
-    price: 10.00,
-    imageUrl: 'https://images.unsplash.com/photo-1515037893149-de7f840978e2?auto=format&fit=crop&w=600&q=80',
-    tags: ['Sem Glúten'],
-    available: true,
-    category: 'Doces'
-  },
-  {
-    id: '5',
-    name: 'Estação Co-Working (1h)',
-    description: 'Acesso à internet de alta velocidade e mesa compartilhada.',
-    price: 35.00,
-    imageUrl: 'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=600&q=80',
-    tags: ['Wi-Fi 5G', 'Tomada'],
-    available: true,
-    category: 'Co-Working'
-  }
-];
+// Tipagem dos dados que vêm do Sanity
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  tags: string[];
+  available: boolean;
+  category: string;
+}
 
-export default function Home() {
-  // Estado para guardar qual filtro está ativo
+interface HomeProps {
+  products: Product[];
+}
+
+export default function Home({ products }: HomeProps) {
   const [activeCategory, setActiveCategory] = useState("Todos");
 
-  // Lógica de filtragem
+  // Proteção caso o banco demore a responder
+  if (!products) return <div className="p-10 text-center">Carregando cardápio...</div>;
+
   const filteredProducts = products.filter(product => {
     if (activeCategory === "Todos") return true;
     return product.category === activeCategory;
@@ -82,7 +46,6 @@ export default function Home() {
           <p className="text-gray-500">Escolha o seu pedido.</p>
         </header>
 
-        {/* Filtros */}
         <div className="flex justify-center w-full">
             <CategoryFilter 
               activeCategory={activeCategory} 
@@ -90,13 +53,11 @@ export default function Home() {
             />
         </div>
 
-        {/* Grid de Produtos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
           {filteredProducts.map((item) => (
             <MenuCard key={item.id} product={item} />
           ))}
           
-          {/* Aviso se a categoria estiver vazia */}
           {filteredProducts.length === 0 && (
              <div className="col-span-full text-center text-gray-400 py-10">
                Nenhum item encontrado nesta categoria.
@@ -106,4 +67,27 @@ export default function Home() {
       </main>
     </div>
   );
+}
+
+// 👇 AQUI ACONTECE A BUSCA NO BANCO DE DADOS
+export async function getStaticProps() {
+  const query = `*[_type == "product"]{
+    "id": _id,
+    name,
+    description,
+    price,
+    "imageUrl": image.asset->url, 
+    tags,
+    available,
+    category
+  }`;
+
+  const products = await client.fetch(query);
+
+  return {
+    props: {
+      products,
+    },
+    revalidate: 60, // Atualiza o site a cada 60s se houver mudança no preço
+  };
 }
