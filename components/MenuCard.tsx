@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { useCart } from '../context/CartContext'; // Importamos o carrinho
 
 interface ProductProps {
   id: string;
@@ -12,25 +13,28 @@ interface ProductProps {
 }
 
 export default function MenuCard({ product }: { product: ProductProps }) {
-  // 👇 SEU NÚMERO ATUALIZADO AQUI
-  const PHONE_NUMBER = '5511930401612'; 
+  const { addToCart } = useCart(); // Pegamos a função de adicionar
 
   const formattedPrice = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   }).format(product.price);
 
-  const handleOrder = () => {
-    if (!product.available) return;
-    const message = `Olá! Gostaria de pedir: *${product.name}* (${formattedPrice})`;
-    const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
+  const handleAdd = () => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+    });
+    // Opcional: Feedback visual simples (vibração no celular)
+    if (navigator.vibrate) navigator.vibrate(50);
   };
 
   return (
     <div className={`
       relative flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 
-      overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1
+      overflow-hidden transition-all duration-300 hover:shadow-xl
       ${!product.available ? 'opacity-75 grayscale pointer-events-none' : ''}
     `}>
       
@@ -46,7 +50,7 @@ export default function MenuCard({ product }: { product: ProductProps }) {
         )}
         {!product.available && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-            <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wide">Esgotado</span>
+            <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold uppercase">Esgotado</span>
           </div>
         )}
       </div>
@@ -58,9 +62,7 @@ export default function MenuCard({ product }: { product: ProductProps }) {
         </div>
 
         {product.quantity && (
-            <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">
-                {product.quantity}
-            </p>
+            <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">{product.quantity}</p>
         )}
 
         <p className="text-gray-500 text-sm leading-relaxed mb-4 flex-grow">
@@ -78,12 +80,12 @@ export default function MenuCard({ product }: { product: ProductProps }) {
 
           {product.available && (
             <button 
-              onClick={handleOrder}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-full shadow-lg transition-colors flex items-center justify-center shrink-0"
-              aria-label="Pedir no WhatsApp"
+              onClick={handleAdd}
+              className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white p-2 rounded-full shadow-lg transition-all flex items-center justify-center shrink-0"
             >
+              {/* Ícone de + (Adicionar) */}
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
             </button>
           )}

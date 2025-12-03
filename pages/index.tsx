@@ -4,6 +4,7 @@ import { client } from '../lib/sanity';
 import MenuCard from '../components/MenuCard';
 import Navbar from '../components/Navbar';
 import CategoryFilter from '../components/CategoryFilter';
+import FloatingCart from '../components/FloatingCart';
 
 interface Product {
   id: string;
@@ -70,6 +71,8 @@ export default function Home({ products }: HomeProps) {
         <p>* Imagens meramente ilustrativas.</p>
         <p>Preços e disponibilidade sujeitos a alteração sem aviso prévio.</p>
       </footer>
+
+      <FloatingCart />
     </div>
   );
 }
