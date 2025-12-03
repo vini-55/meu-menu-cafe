@@ -13,7 +13,12 @@ interface ProductProps {
 }
 
 export default function MenuCard({ product }: { product: ProductProps }) {
-  const { addToCart } = useCart(); // Pegamos a função de adicionar
+  // Agora pegamos também o 'cart' e o 'removeFromCart'
+  const { addToCart, removeFromCart, cart } = useCart(); 
+
+  // Verifica quantos deste item já estão na sacola
+  const cartItem = cart.find((item) => item.id === product.id);
+  const quantityInCart = cartItem ? cartItem.quantity : 0;
 
   const formattedPrice = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -27,7 +32,13 @@ export default function MenuCard({ product }: { product: ProductProps }) {
       price: product.price,
       quantity: 1,
     });
-    // Opcional: Feedback visual simples (vibração no celular)
+    // Vibração tátil
+    if (navigator.vibrate) navigator.vibrate(50);
+  };
+
+  const handleRemove = () => {
+    removeFromCart(product.id);
+    // Vibração tátil
     if (navigator.vibrate) navigator.vibrate(50);
   };
 
@@ -79,15 +90,35 @@ export default function MenuCard({ product }: { product: ProductProps }) {
           </div>
 
           {product.available && (
-            <button 
-              onClick={handleAdd}
-              className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white p-2 rounded-full shadow-lg transition-all flex items-center justify-center shrink-0"
-            >
-              {/* Ícone de + (Adicionar) */}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-            </button>
+            // LÓGICA DO BOTÃO:
+            // Se tiver na sacola, mostra os controles (+ e -)
+            quantityInCart > 0 ? (
+                <div className="flex items-center gap-3 bg-gray-50 rounded-full p-1 shadow-inner border border-gray-100">
+                    <button
+                        onClick={handleRemove}
+                        className="w-8 h-8 flex items-center justify-center bg-white text-emerald-700 rounded-full shadow-sm hover:bg-gray-100 transition-colors font-bold text-lg"
+                    >
+                        −
+                    </button>
+                    <span className="text-sm font-bold text-gray-700 min-w-[1rem] text-center">{quantityInCart}</span>
+                    <button
+                        onClick={handleAdd}
+                        className="w-8 h-8 flex items-center justify-center bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition-colors font-bold text-lg"
+                    >
+                        +
+                    </button>
+                </div>
+            ) : (
+                // Se não tiver, mostra o botão normal de adicionar
+                <button 
+                  onClick={handleAdd}
+                  className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white p-2 rounded-full shadow-lg transition-all flex items-center justify-center shrink-0"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+            )
           )}
         </div>
       </div>
