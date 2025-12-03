@@ -8,11 +8,12 @@ interface ProductProps {
   imageUrl: string;
   tags?: string[];
   available: boolean;
-  quantity?: string; // Campo novo
+  quantity?: string;
 }
 
 export default function MenuCard({ product }: { product: ProductProps }) {
-  const PHONE_NUMBER = '5511999999999'; 
+  // 👇 SEU NÚMERO ATUALIZADO AQUI
+  const PHONE_NUMBER = '5511930401612'; 
 
   const formattedPrice = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -56,7 +57,6 @@ export default function MenuCard({ product }: { product: ProductProps }) {
           <span className="font-bold text-emerald-600 text-lg whitespace-nowrap ml-4">{formattedPrice}</span>
         </div>
 
-        {/* AQUI É ONDE A QUANTIDADE APARECE */}
         {product.quantity && (
             <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">
                 {product.quantity}
@@ -80,6 +80,7 @@ export default function MenuCard({ product }: { product: ProductProps }) {
             <button 
               onClick={handleOrder}
               className="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-full shadow-lg transition-colors flex items-center justify-center shrink-0"
+              aria-label="Pedir no WhatsApp"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
