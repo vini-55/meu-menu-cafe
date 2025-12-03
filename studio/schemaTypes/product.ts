@@ -57,5 +57,11 @@ export default defineType({
       type: 'array',
       of: [{ type: 'string' }],
     }),
+    defineField({
+      name: 'quantity',
+      title: 'Quantidade / Porção',
+      type: 'string',
+      description: 'Ex: 300ml, 150g, 1 fatia, 1 hora',
+    }),
   ],
 })
