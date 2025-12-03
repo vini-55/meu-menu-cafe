@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import Head from 'next/head';
-import { client } from '../lib/sanity'; // Conexão com o Sanity
+import { client } from '../lib/sanity';
 import MenuCard from '../components/MenuCard';
 import Navbar from '../components/Navbar';
 import CategoryFilter from '../components/CategoryFilter';
 
-// Tipagem dos dados que vêm do Sanity
 interface Product {
   id: string;
   name: string;
@@ -15,6 +14,7 @@ interface Product {
   tags: string[];
   available: boolean;
   category: string;
+  quantity?: string; // Campo novo
 }
 
 interface HomeProps {
@@ -24,7 +24,6 @@ interface HomeProps {
 export default function Home({ products }: HomeProps) {
   const [activeCategory, setActiveCategory] = useState("Todos");
 
-  // Proteção caso o banco demore a responder
   if (!products) return <div className="p-10 text-center">Carregando cardápio...</div>;
 
   const filteredProducts = products.filter(product => {
@@ -33,14 +32,14 @@ export default function Home({ products }: HomeProps) {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-10">
+    <div className="min-h-screen bg-gray-50 pb-10 flex flex-col">
       <Head>
         <title>Menu da Cafeteria</title>
       </Head>
 
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4">
+      <main className="max-w-6xl mx-auto px-4 flex-grow w-full">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Nosso Menu</h1>
           <p className="text-gray-500">Escolha o seu pedido.</p>
@@ -65,12 +64,18 @@ export default function Home({ products }: HomeProps) {
           )}
         </div>
       </main>
+
+      {/* RODAPÉ COM AVISO LEGAL */}
+      <footer className="mt-12 py-6 text-center text-xs text-gray-400 border-t border-gray-200">
+        <p>* Imagens meramente ilustrativas.</p>
+        <p>Preços e disponibilidade sujeitos a alteração sem aviso prévio.</p>
+      </footer>
     </div>
   );
 }
 
-// 👇 AQUI ACONTECE A BUSCA NO BANCO DE DADOS
 export async function getStaticProps() {
+  // AQUI ADICIONAMOS "quantity" NA BUSCA
   const query = `*[_type == "product"]{
     "id": _id,
     name,
@@ -79,15 +84,14 @@ export async function getStaticProps() {
     "imageUrl": image.asset->url, 
     tags,
     available,
-    category
+    category,
+    quantity 
   }`;
 
   const products = await client.fetch(query);
 
   return {
-    props: {
-      products,
-    },
-    revalidate: 60, // Atualiza o site a cada 60s se houver mudança no preço
+    props: { products },
+    revalidate: 60,
   };
 }
