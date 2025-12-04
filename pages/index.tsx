@@ -5,9 +5,8 @@ import MenuCard from '../components/MenuCard';
 import Navbar from '../components/Navbar';
 import CategoryFilter from '../components/CategoryFilter';
 import FloatingCart from '../components/FloatingCart';
-import CartModal from '../components/CartModal'; // <--- Importe o Modal
+import CartModal from '../components/CartModal';
 
-// ... (Interfaces Product e HomeProps continuam iguais) ...
 interface Product {
   id: string;
   name: string;
@@ -26,9 +25,17 @@ interface HomeProps {
 
 export default function Home({ products }: HomeProps) {
   const [activeCategory, setActiveCategory] = useState("Todos");
-  
-  // ESTADO PARA CONTROLAR O MODAL (ABERTO/FECHADO)
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // --- CONFIGURAÇÃO DO LINK (IMPORTANTE) ---
+  // Quando você subir o site (na Vercel, por exemplo), troque este link pelo seu oficial.
+  // Exemplo: const baseUrl = "https://cafedevexemplo.vercel.app";
+  const baseUrl = "https://seu-site-aqui.com"; 
+
+  // URL da imagem que vai aparecer no WhatsApp
+  // O ideal é criar uma imagem de 1200x630px chamada "banner-zap.jpg" e por na pasta public
+  // Por enquanto, vou usar o seu logo dark que já existe.
+  const ogImage = `${baseUrl}/logo-luna-dark.jpg`;
 
   if (!products) return <div className="p-10 text-center">Carregando cardápio...</div>;
 
@@ -40,7 +47,25 @@ export default function Home({ products }: HomeProps) {
   return (
     <div className="min-h-screen pb-24 flex flex-col">
       <Head>
-        <title>Café Luna - Menu</title>
+        <title>Café Luna - Menu Digital</title>
+        <meta name="description" content="Cardápio digital do Café Luna. Torrefação Artesanal." />
+
+        {/* --- META TAGS PARA WHATSAPP & REDES SOCIAIS --- */}
+        {/* Título que aparece no zap */}
+        <meta property="og:title" content="Café Luna - Faça seu pedido!" />
+        
+        {/* Descriçãozinha embaixo do título */}
+        <meta property="og:description" content="Confira nosso cardápio de cafés especiais, salgados e doces. Peça direto pelo WhatsApp." />
+        
+        {/* Tipo do site */}
+        <meta property="og:type" content="website" />
+        
+        {/* A Imagem (Obrigatório ser link completo com https://) */}
+        <meta property="og:image" content={ogImage} />
+        
+        {/* Tamanhos para ajudar o WhatsApp a carregar rápido */}
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
       </Head>
 
       <Navbar />
@@ -87,24 +112,23 @@ export default function Home({ products }: HomeProps) {
   );
 }
 
-// ... (getStaticProps continua igual) ...
 export async function getStaticProps() {
-    const query = `*[_type == "product"]{
-      "id": _id,
-      name,
-      description,
-      price,
-      "imageUrl": image.asset->url, 
-      tags,
-      available,
-      category,
-      quantity 
-    }`;
-  
-    const products = await client.fetch(query);
-  
-    return {
-      props: { products },
-      revalidate: 60,
-    };
-  }
+  const query = `*[_type == "product"]{
+    "id": _id,
+    name,
+    description,
+    price,
+    "imageUrl": image.asset->url, 
+    tags,
+    available,
+    category,
+    quantity 
+  }`;
+
+  const products = await client.fetch(query);
+
+  return {
+    props: { products },
+    revalidate: 60,
+  };
+}
