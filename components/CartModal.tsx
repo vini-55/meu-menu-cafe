@@ -6,14 +6,47 @@ interface CartModalProps {
 }
 
 export default function CartModal({ isOpen, onClose }: CartModalProps) {
-  // Agora importamos também o 'addToCart' (para aumentar) e 'decreaseQuantity' (para diminuir)
   const { cart, addToCart, decreaseQuantity, removeFromCart, total, clearCart } = useCart();
 
   if (!isOpen) return null;
 
+  // FUNÇÃO QUE GERA A MENSAGEM DO WHATSAPP
+  const handleFinalizeOrder = () => {
+    // 1. Formata a lista de itens
+    const itemsList = cart.map(item => {
+      const itemTotal = (item.price * item.quantity).toFixed(2).replace('.', ',');
+      return `  ${item.quantity}x ${item.name}\n   └ R$ ${itemTotal}`;
+    }).join('\n');
+
+    // 2. Monta o texto completo (Layout Cupom)
+    // Usei "Café Luna" no título para combinar com o site, mas pode mudar para "Café Dev" se preferir
+    const text = `
+NOVO PEDIDO - Café Luna
+------------------------------
+${itemsList}
+------------------------------
+  TOTAL: R$ ${total.toFixed(2).replace('.', ',')}
+------------------------------
+
+  DADOS PARA PAGAMENTO (PIX)
+Chave: 11930401612
+Favorecido: Café Luna
+
+  Envie o comprovante para confirmarmos o pedido.
+`;
+
+    // 3. Codifica para URL do WhatsApp
+    const encodedText = encodeURIComponent(text);
+    const phoneNumber = "5511930401612"; // Seu número configurado
+
+    // 4. Abre o WhatsApp e limpa o carrinho
+    window.open(`https://wa.me/${phoneNumber}?text=${encodedText}`, '_blank');
+    clearCart();
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      {/* Container do Modal */}
       <div className="bg-white dark:bg-stone-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Cabeçalho */}
@@ -39,8 +72,6 @@ export default function CartModal({ isOpen, onClose }: CartModalProps) {
           ) : (
             cart.map((item) => (
               <div key={item.id} className="flex justify-between items-start border-b border-stone-100 dark:border-stone-800 pb-4 last:border-0">
-                
-                {/* Nome e Descrição */}
                 <div className="flex-grow pr-4">
                   <h3 className="font-bold text-stone-800 dark:text-stone-200 text-lg leading-tight">
                     {item.name}
@@ -56,13 +87,11 @@ export default function CartModal({ isOpen, onClose }: CartModalProps) {
                    </button>
                 </div>
 
-                {/* Controles de Quantidade e Preço */}
                 <div className="flex flex-col items-end gap-1">
                    <span className="font-bold text-stone-900 dark:text-luna-gold mb-2">
                      R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}
                    </span>
                    
-                   {/* O CONTROLE DE QUANTIDADE VEM AQUI */}
                    <div className="flex items-center bg-stone-100 dark:bg-stone-800 rounded-lg border border-stone-200 dark:border-stone-700 h-8">
                       <button 
                         onClick={() => decreaseQuantity(item.id)}
@@ -86,7 +115,7 @@ export default function CartModal({ isOpen, onClose }: CartModalProps) {
           )}
         </div>
 
-        {/* Rodapé com Total e Ação */}
+        {/* Rodapé */}
         {cart.length > 0 && (
           <div className="p-5 bg-stone-50 dark:bg-stone-950 border-t border-stone-100 dark:border-stone-800">
             <div className="flex justify-between items-center mb-4">
@@ -97,11 +126,7 @@ export default function CartModal({ isOpen, onClose }: CartModalProps) {
             </div>
 
             <button 
-              onClick={() => {
-                // Aqui você vai colocar a lógica do WhatsApp depois
-                const message = cart.map(i => `${i.quantity}x ${i.name}`).join('%0A');
-                window.open(`https://wa.me/55SEUNUMERO?text=Olá! Gostaria de pedir:%0A${message}%0ATotal: R$ ${total.toFixed(2)}`, '_blank');
-              }}
+              onClick={handleFinalizeOrder}
               className="w-full py-3.5 rounded-xl font-bold text-lg shadow-lg
                          bg-stone-900 text-white hover:bg-black
                          dark:bg-luna-gold dark:text-stone-900 dark:hover:bg-[#d4b47d] 
