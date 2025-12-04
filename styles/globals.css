@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+@layer base {
+  body {
+    /* Voltamos para bg-stone-100 */
+    @apply bg-stone-100 text-stone-800 dark:bg-stone-900 dark:text-stone-100 font-sans transition-colors duration-300;
+  }
+
+  h1, h2, h3 {
+    @apply tracking-wide;
+  }
+}
