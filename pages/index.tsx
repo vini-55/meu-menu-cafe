@@ -29,7 +29,7 @@ export default function Home({ products }: HomeProps) {
 
   // Link do site (lembre-se de atualizar quando tiver o domínio final)
   const baseUrl = "https://meu-menu-cafe.vercel.app"; 
-  const ogImage = `${baseUrl}/logo-luna-dark.jpg`;
+  const ogImage = `${baseUrl}/banner-whatsapp.jpg`;
 
   if (!products) return <div className="p-10 text-center">Carregando cardápio...</div>;
 
