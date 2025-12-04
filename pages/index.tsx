@@ -27,14 +27,8 @@ export default function Home({ products }: HomeProps) {
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // --- CONFIGURAÇÃO DO LINK (IMPORTANTE) ---
-  // Quando você subir o site (na Vercel, por exemplo), troque este link pelo seu oficial.
-  // Exemplo: const baseUrl = "https://cafedevexemplo.vercel.app";
-  const baseUrl = "https://seu-site-aqui.com"; 
-
-  // URL da imagem que vai aparecer no WhatsApp
-  // O ideal é criar uma imagem de 1200x630px chamada "banner-zap.jpg" e por na pasta public
-  // Por enquanto, vou usar o seu logo dark que já existe.
+  // Link do site (lembre-se de atualizar quando tiver o domínio final)
+  const baseUrl = "https://meu-menu-cafe.vercel.app"; 
   const ogImage = `${baseUrl}/logo-luna-dark.jpg`;
 
   if (!products) return <div className="p-10 text-center">Carregando cardápio...</div>;
@@ -48,22 +42,11 @@ export default function Home({ products }: HomeProps) {
     <div className="min-h-screen pb-24 flex flex-col">
       <Head>
         <title>Café Luna - Menu Digital</title>
-        <meta name="description" content="Cardápio digital do Café Luna. Torrefação Artesanal." />
-
-        {/* --- META TAGS PARA WHATSAPP & REDES SOCIAIS --- */}
-        {/* Título que aparece no zap */}
+        <meta name="description" content="Cardápio digital do Café Luna." />
         <meta property="og:title" content="Café Luna - Faça seu pedido!" />
-        
-        {/* Descriçãozinha embaixo do título */}
-        <meta property="og:description" content="Confira nosso cardápio de cafés especiais, salgados e doces. Peça direto pelo WhatsApp." />
-        
-        {/* Tipo do site */}
+        <meta property="og:description" content="Confira nosso cardápio e peça pelo WhatsApp." />
         <meta property="og:type" content="website" />
-        
-        {/* A Imagem (Obrigatório ser link completo com https://) */}
         <meta property="og:image" content={ogImage} />
-        
-        {/* Tamanhos para ajudar o WhatsApp a carregar rápido */}
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
       </Head>
@@ -100,11 +83,21 @@ export default function Home({ products }: HomeProps) {
         </div>
       </main>
 
-      <footer className="mt-16 py-8 text-center text-sm text-stone-500 border-t border-stone-200 dark:border-stone-800">
+      {/* RODAPÉ COM SUA ASSINATURA */}
+      <footer className="mt-16 py-8 text-center text-sm text-stone-500 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-2">
         <p>© Café Luna. Imagens meramente ilustrativas.</p>
+        
+        {/* Seu Link de Desenvolvedor */}
+        <a 
+          href="https://wa.me/5511930401612?text=Ol%C3%A1%20Vin%C3%ADcius%2C%20vi%20o%20menu%20do%20Caf%C3%A9%20Luna%20e%20gostaria%20de%20saber%20mais%20sobre%20seus%20servi%C3%A7os%21"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-stone-400 hover:text-luna-gold transition-colors duration-300 font-medium text-xs uppercase tracking-wide"
+        >
+          Desenvolvido por <span className="font-bold">Vinícius Magalhães</span>
+        </a>
       </footer>
 
-      {/* COMPONENTES DO CARRINHO */}
       <FloatingCart onClick={() => setIsCartOpen(true)} />
       <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       
