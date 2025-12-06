@@ -6,10 +6,11 @@ interface Product {
   price: number;
   imageUrl: string;
   description: string;
+  quantity?: string; // Mantendo o campo de peso/porção que arrumamos antes
 }
 
 interface CartItem extends Product {
-  quantity: number;
+  quantityCount: number; // Mudei o nome interno para não confundir com o texto 'quantity'
 }
 
 interface CartContextData {
@@ -20,16 +21,22 @@ interface CartContextData {
   clearCart: () => void;
   total: number;
   cartCount: number;
+  // NOVOS CAMPOS PARA A MESA/COMANDA
+  identification: string; 
+  setIdentification: (id: string) => void;
 }
 
 const CartContext = createContext<CartContextData>({} as CartContextData);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [identification, setIdentification] = useState(""); // Começa vazio
 
-  // Carregar carrinho salvo
+  // 1. Carregar carrinho E a mesa salva (caso recarregue a página)
   useEffect(() => {
     const storedCart = localStorage.getItem('@CafeLuna:cart');
+    const storedId = localStorage.getItem('@CafeLuna:id'); // Recupera a mesa
+    
     if (storedCart) {
       try {
         setCart(JSON.parse(storedCart));
@@ -37,57 +44,77 @@ export function CartProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('@CafeLuna:cart');
       }
     }
+    if (storedId) {
+      setIdentification(storedId);
+    }
   }, []);
 
-  // Salvar carrinho automaticamente
+  // 2. Salvar carrinho automaticamente
   useEffect(() => {
     localStorage.setItem('@CafeLuna:cart', JSON.stringify(cart));
   }, [cart]);
 
-  // FUNÇÃO DE ADICIONAR (Aumenta quantidade se já existe)
+  // 3. Salvar a mesa automaticamente
+  useEffect(() => {
+    if (identification) {
+      localStorage.setItem('@CafeLuna:id', identification);
+    }
+  }, [identification]);
+
   const addToCart = (product: Product) => {
     setCart((currentCart) => {
-      const itemExists = currentCart.find((item) => item.id === product.id);
+      const itemExists = currentCart.find((item) => String(item.id) === String(product.id));
       if (itemExists) {
         return currentCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          String(item.id) === String(product.id) ? { ...item, quantityCount: item.quantityCount + 1 } : item
         );
       } else {
-        // Garante que começa com 1 e limpa qualquer lixo de dados antigos
-        return [...currentCart, { ...product, quantity: 1 }];
+        return [...currentCart, { ...product, quantityCount: 1 }];
       }
     });
   };
 
-  // FUNÇÃO DE DIMINUIR (Remove se for 1, diminui se for maior)
   const decreaseQuantity = (productId: string) => {
     setCart((currentCart) => {
-      const itemExists = currentCart.find((item) => item.id === productId);
+      const itemExists = currentCart.find((item) => String(item.id) === String(productId));
       if (!itemExists) return currentCart;
       
-      if (itemExists.quantity === 1) {
-        return currentCart.filter((item) => item.id !== productId);
+      if (itemExists.quantityCount === 1) {
+        return currentCart.filter((item) => String(item.id) !== String(productId));
       } else {
         return currentCart.map((item) =>
-          item.id === productId ? { ...item, quantity: item.quantity - 1 } : item
+          String(item.id) === String(productId) ? { ...item, quantityCount: item.quantityCount - 1 } : item
         );
       }
     });
   };
 
   const removeFromCart = (productId: string) => {
-    setCart((currentCart) => currentCart.filter((item) => item.id !== productId));
+    setCart((currentCart) => currentCart.filter((item) => String(item.id) !== String(productId)));
   };
 
   const clearCart = () => {
     setCart([]);
+    localStorage.removeItem('@CafeLuna:cart');
+    // Nota: Não limpamos a mesa aqui propositalmente, 
+    // para o cliente poder fazer um segundo pedido sem escanear de novo.
   };
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantityCount, 0);
+  const cartCount = cart.reduce((sum, item) => sum + item.quantityCount, 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, decreaseQuantity, removeFromCart, clearCart, total, cartCount }}>
+    <CartContext.Provider value={{ 
+      cart, 
+      addToCart, 
+      decreaseQuantity, 
+      removeFromCart, 
+      clearCart, 
+      total, 
+      cartCount,
+      identification,     // Exportando
+      setIdentification   // Exportando
+    }}>
       {children}
     </CartContext.Provider>
   );

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+// 1. CORREÇÃO: Adicionamos useEffect e useRouter nas importações
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { client } from '../lib/sanity';
 import MenuCard from '../components/MenuCard';
@@ -6,6 +8,7 @@ import Navbar from '../components/Navbar';
 import CategoryFilter from '../components/CategoryFilter';
 import FloatingCart from '../components/FloatingCart';
 import CartModal from '../components/CartModal';
+import { useCart } from '../context/CartContext'; // Importe o contexto
 
 interface Product {
   id: string;
@@ -27,9 +30,25 @@ export default function Home({ products }: HomeProps) {
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Link do site (lembre-se de atualizar quando tiver o domínio final)
+  // 2. CORREÇÃO: Inicializamos o Router e pegamos a função do Cart
+  const router = useRouter();
+  const { setIdentification, identification } = useCart();
+
   const baseUrl = "https://meu-menu-cafe.vercel.app"; 
-  const ogImage = `${baseUrl}/banner-whatsapp.jpg`;
+  const ogImage = `${baseUrl}/logo-luna-dark.jpg`;
+
+  // 3. CORREÇÃO: Efeito para capturar a mesa da URL
+  useEffect(() => {
+    if (router.isReady) {
+      const { mesa, comanda } = router.query;
+      
+      if (mesa) {
+        setIdentification(`Mesa ${mesa}`);
+      } else if (comanda) {
+        setIdentification(`Comanda ${comanda}`);
+      }
+    }
+  }, [router.isReady, router.query, setIdentification]);
 
   if (!products) return <div className="p-10 text-center">Carregando cardápio...</div>;
 
@@ -58,6 +77,14 @@ export default function Home({ products }: HomeProps) {
           <h1 className="text-4xl font-bold uppercase tracking-wider text-stone-800 dark:text-stone-100 mb-3">
             Nosso Menu
           </h1>
+          
+          {/* Aviso visual da Mesa */}
+          {identification && (
+            <span className="inline-block bg-luna-gold text-white text-xs font-bold px-3 py-1 rounded-full mb-2 uppercase tracking-widest">
+              📍 Você está na {identification}
+            </span>
+          )}
+
           <p className="text-stone-600 dark:text-stone-400 text-lg font-medium">
             Escolha o seu pedido.
           </p>
@@ -83,11 +110,8 @@ export default function Home({ products }: HomeProps) {
         </div>
       </main>
 
-      {/* RODAPÉ COM SUA ASSINATURA */}
       <footer className="mt-16 py-8 text-center text-sm text-stone-500 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-2">
         <p>© Café Luna. Imagens meramente ilustrativas.</p>
-        
-        {/* Seu Link de Desenvolvedor */}
         <a 
           href="https://wa.me/5511930401612?text=Ol%C3%A1%20Vin%C3%ADcius%2C%20vi%20o%20menu%20do%20Caf%C3%A9%20Luna%20e%20gostaria%20de%20saber%20mais%20sobre%20seus%20servi%C3%A7os%21"
           target="_blank"
