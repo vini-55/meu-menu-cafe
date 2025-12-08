@@ -6,23 +6,27 @@ interface Product {
   price: number;
   imageUrl: string;
   description: string;
-  quantity?: string; // Mantendo o campo de peso/porção que arrumamos antes
+  quantity?: string;
 }
 
 interface CartItem extends Product {
-  quantityCount: number; // Mudei o nome interno para não confundir com o texto 'quantity'
+  quantityCount: number;
 }
 
 interface CartContextData {
   cart: CartItem[];
+  history: CartItem[];
   addToCart: (product: Product) => void;
   decreaseQuantity: (productId: string) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
-  total: number;
+  confirmOrderToHistory: () => void;
+  closeTab: () => void;
+  totalCart: number;
+  totalHistory: number;
+  totalGrand: number;
   cartCount: number;
-  // NOVOS CAMPOS PARA A MESA/COMANDA
-  identification: string; 
+  identification: string;
   setIdentification: (id: string) => void;
 }
 
@@ -30,36 +34,38 @@ const CartContext = createContext<CartContextData>({} as CartContextData);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [identification, setIdentification] = useState(""); // Começa vazio
+  const [history, setHistory] = useState<CartItem[]>([]);
+  const [identification, setIdentification] = useState("");
 
-  // 1. Carregar carrinho E a mesa salva (caso recarregue a página)
   useEffect(() => {
+    const now = new Date().getTime();
     const storedCart = localStorage.getItem('@CafeLuna:cart');
-    const storedId = localStorage.getItem('@CafeLuna:id'); // Recupera a mesa
-    
-    if (storedCart) {
-      try {
-        setCart(JSON.parse(storedCart));
-      } catch {
-        localStorage.removeItem('@CafeLuna:cart');
+    const storedHistory = localStorage.getItem('@CafeLuna:history');
+    const storedId = localStorage.getItem('@CafeLuna:id');
+    const lastUpdate = localStorage.getItem('@CafeLuna:lastUpdate');
+
+    if (lastUpdate && (now - Number(lastUpdate) > 12 * 60 * 60 * 1000)) {
+      localStorage.removeItem('@CafeLuna:cart');
+      localStorage.removeItem('@CafeLuna:history');
+      setCart([]);
+      setHistory([]);
+    } else {
+      if (storedCart) {
+        try { setCart(JSON.parse(storedCart)); } catch { localStorage.removeItem('@CafeLuna:cart'); }
       }
-    }
-    if (storedId) {
-      setIdentification(storedId);
+      if (storedHistory) {
+        try { setHistory(JSON.parse(storedHistory)); } catch { localStorage.removeItem('@CafeLuna:history'); }
+      }
+      if (storedId) setIdentification(storedId);
     }
   }, []);
 
-  // 2. Salvar carrinho automaticamente
   useEffect(() => {
     localStorage.setItem('@CafeLuna:cart', JSON.stringify(cart));
-  }, [cart]);
-
-  // 3. Salvar a mesa automaticamente
-  useEffect(() => {
-    if (identification) {
-      localStorage.setItem('@CafeLuna:id', identification);
-    }
-  }, [identification]);
+    localStorage.setItem('@CafeLuna:history', JSON.stringify(history));
+    localStorage.setItem('@CafeLuna:id', identification);
+    localStorage.setItem('@CafeLuna:lastUpdate', String(new Date().getTime()));
+  }, [cart, history, identification]);
 
   const addToCart = (product: Product) => {
     setCart((currentCart) => {
@@ -78,7 +84,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart((currentCart) => {
       const itemExists = currentCart.find((item) => String(item.id) === String(productId));
       if (!itemExists) return currentCart;
-      
       if (itemExists.quantityCount === 1) {
         return currentCart.filter((item) => String(item.id) !== String(productId));
       } else {
@@ -93,27 +98,52 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart((currentCart) => currentCart.filter((item) => String(item.id) !== String(productId)));
   };
 
-  const clearCart = () => {
+  const confirmOrderToHistory = () => {
+    setHistory((currentHistory) => {
+      const newHistory = [...currentHistory];
+      cart.forEach(cartItem => {
+        const existingItem = newHistory.find(h => String(h.id) === String(cartItem.id));
+        if (existingItem) {
+          existingItem.quantityCount += cartItem.quantityCount;
+        } else {
+          newHistory.push(cartItem);
+        }
+      });
+      return newHistory;
+    });
     setCart([]);
-    localStorage.removeItem('@CafeLuna:cart');
-    // Nota: Não limpamos a mesa aqui propositalmente, 
-    // para o cliente poder fazer um segundo pedido sem escanear de novo.
   };
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantityCount, 0);
-  const cartCount = cart.reduce((sum, item) => sum + item.quantityCount, 0);
+  const closeTab = () => {
+    setCart([]);
+    setHistory([]);
+    localStorage.removeItem('@CafeLuna:cart');
+    localStorage.removeItem('@CafeLuna:history');
+  };
+
+  const clearCart = () => setCart([]);
+
+  // CÁLCULOS COM PROTEÇÃO CONTRA ERROS (Number + || 0)
+  const calculateTotal = (items: CartItem[]) => {
+    return items.reduce((sum, item) => {
+      const price = Number(item.price) || 0;
+      const qtd = Number(item.quantityCount) || 0;
+      return sum + (price * qtd);
+    }, 0);
+  };
+
+  const totalCart = calculateTotal(cart);
+  const totalHistory = calculateTotal(history);
+  const totalGrand = totalCart + totalHistory;
+  
+  const cartCount = cart.reduce((sum, item) => sum + (Number(item.quantityCount) || 0), 0);
 
   return (
     <CartContext.Provider value={{ 
-      cart, 
-      addToCart, 
-      decreaseQuantity, 
-      removeFromCart, 
-      clearCart, 
-      total, 
-      cartCount,
-      identification,     // Exportando
-      setIdentification   // Exportando
+      cart, history, addToCart, decreaseQuantity, removeFromCart, clearCart, 
+      confirmOrderToHistory, closeTab,
+      totalCart, totalHistory, totalGrand, cartCount,
+      identification, setIdentification
     }}>
       {children}
     </CartContext.Provider>

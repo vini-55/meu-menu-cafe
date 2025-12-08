@@ -5,9 +5,9 @@ import {schemaTypes} from './schemaTypes'
 
 export default defineConfig({
   name: 'default',
-  title: 'menu-cafe-studio',
+  title: 'Painel Café Luna', // AQUI você pode colocar o nome bonito (com acento e espaço)
 
-  projectId: 'qaua8bm0', // Seu ID real
+  projectId: 'qaua8bm0', // AQUI tem que ser o código qaua8bm0 (sem espaços)
   dataset: 'production',
 
   plugins: [structureTool(), visionTool()],
